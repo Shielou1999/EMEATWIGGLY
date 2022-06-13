@@ -1,0 +1,1518 @@
+﻿@using Wiggly
+@namespace Wiggly.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using DevExtreme.AspNet.Mvc
+@model Wiggly.Entities.Schedules;
+
+@{
+    ViewData["Title"] = "Marketplace";
+    Layout = "_LayoutAdminLTEVendorDashboard";
+}
+
+<link rel="stylesheet" href="~/plugins/leaflet/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+<style>
+    .marketplace-parent-container {
+        margin: 0 auto;
+        padding: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        max-height: 650px;
+        overflow: auto;
+    }
+
+    .item-card {
+        position: relative;
+        width: 210px;
+        height: 270px;
+        background: #fefefe;
+        padding: 5px;
+        margin: 5px;
+        border: solid 1px #ccc;
+    }
+
+        .item-card .image-container img {
+            width: 197px;
+            height: 200px;
+            display: block;
+            object-fit: cover;
+        }
+
+        .item-card .item-caption {
+            margin: 6px 0;
+        }
+
+            .item-card .item-caption p {
+                width: 200px;
+                height: 20px;
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+    .date-posted {
+        position: absolute;
+        padding: 4px;
+        left: 10px;
+        top: 15px;
+        background: rgb(81, 81, 81, .5);
+        color: #fefefe;
+    }
+
+    .item-edit {
+        position: absolute;
+        padding: 4px;
+        right: 10px;
+        top: 15px;
+        color: rgb(81, 81, 81);
+    }
+
+    .item-type {
+        position: absolute;
+        padding: 4px;
+        left: 10px;
+        top: 45px;
+        background: rgb(81, 81, 81, .5);
+        color: #fefefe;
+    }
+
+    /*this is to  the images in side the add item popup form*/
+    .image-container {
+        overflow: auto;
+    }
+
+    ul {
+        text-align: left;
+        display: flex;
+    }
+
+    li {
+        list-style: none;
+        display: inline-block; /*pour limiter l'espace occupé   par l'image li*/
+    }
+
+    article {
+        position: relative;
+    }
+
+        article button {
+            position: absolute;
+            right: 20px;
+            top: 5px;
+        }
+
+    img {
+        width: 150px;
+        height: 150px;
+        display: block;
+        object-fit: cover;
+    }
+
+    figure {
+        /*background: #7D5976;*/
+        text-align: center;
+        padding: 10px;
+        margin: 10px;
+    }
+
+    a {
+        color: white;
+        text-decoration: none;
+    }
+
+        a:hover {
+            text-decoration: none;
+            color: pink;
+        }
+
+    span.description {
+        padding: 10px;
+        display: block;
+    }
+
+
+    /* The Modal (background) */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 2147483648; /* Sit on top */
+        padding-top: 40px; /* Location of the box */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+    }
+
+    /* Modal Content (Image) */
+    .modal-content {
+        margin: auto;
+        display: block;
+        width: 80%;
+        height: 80%;
+        max-width: 700px;
+    }
+    /*
+    * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        font-family: Verdana,sans-serif;
+    }
+
+    body {
+        background-color: #dbdbdb;
+    }*/
+
+    .parent {
+        width: 300px;
+        margin: 3em auto;
+        padding: 1em;
+        background: #f2f2f2;
+    }
+
+    .filter-container > div {
+        margin-top: 5px;
+    }
+
+    .filter-container .search-filter input {
+        padding: 0.5em;
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    .filter-container div fieldset {
+        padding: 5px;
+    }
+
+    fieldset div label {
+        font-size: 1em;
+    }
+
+    .clear-filter {
+        width: 100%;
+    }
+
+        .clear-filter div {
+            width: 100%;
+            background: #00b0ff;
+            border-radius: 10px;
+            padding: .5em;
+            text-align: center;
+        }
+
+    .example-container {
+        background: white;
+        width: 600px;
+        box-sizing: border-box;
+        font-family: helvetica;
+        font-size: 16px;
+        padding: 1.5em;
+/*        -webkit-box-shadow: 1px 5px 5px 0px rgba(0,0,0,0.15);
+        -moz-box-shadow: 1px 5px 5px 0px rgba(0,0,0,0.15);*/
+        /*box-shadow: 1px 5px 5px 0px rgba(0,0,0,0.15);*/
+        border-radius: 8px;
+    }
+
+        .example-container * {
+            box-sizing: inherit;
+            font-size: inherit;
+        }
+
+        .example-container .header {
+            margin: 1em 0;
+        }
+
+        .example-container #MapLocation {
+            margin-bottom: 0.75em;
+        }
+
+    /*.leaflet-popup {
+        top: 55px !important;
+    }*/
+    /* Here I move the "tip" to the right location, but didn't succeed in making it visible. So I just remove the box-shadow and leave it: */
+    /*.leaflet-popup-tip-container {
+        top: 0px !important;
+    }
+
+    .leaflet-popup-tip {
+        box-shadow: none !important;
+    }
+
+    .leaflet-popup:before {
+        content: "";
+        position: absolute;
+        border: 13px solid transparent;
+        border-bottom-color: white;
+        bottom: 0px;
+        margin-left: -13px;
+    }*/
+</style>
+
+<h3>Marketplace</h3>
+
+@* devexpress template *@
+@(Html.DevExtreme().Popup()
+    .ID("addPostPopup")
+    .Title("Appointment info")
+    .Width(700)
+    .Height(650)
+    .ContentTemplate(new TemplateName("customPopupContentTemplate"))
+    .ToolbarItems(items =>
+    {
+        items.Add()
+            .Widget(editor => editor.Button()
+                .Text("Confirm")
+                .Type(ButtonType.Success)
+            .OnClick("onConfirmClick")
+            )
+            .Location(ToolbarItemLocation.After)
+            .Toolbar(Toolbar.Bottom);
+        items.Add()
+            .Widget(editor => editor.Button()
+                .Text("Cancel")
+                .Type(ButtonType.Success)
+            .OnClick("onCancelClick")
+            )
+            .Location(ToolbarItemLocation.After)
+            .Toolbar(Toolbar.Bottom);
+
+    })
+    .DragEnabled(true)
+    .CloseOnOutsideClick(false)
+    .ShowCloseButton(true)
+    .OnInitialized("onPopupInitialized")
+
+)
+@*custom template inside is form*@
+@using (Html.DevExtreme().NamedTemplate("customPopupContentTemplate"))
+{
+    @(Html.DevExtreme().Form<Wiggly.Models.MarketPlaceViewModel>()
+        .ID("formDetails")
+        .ColCount(2)
+        .ActiveStateEnabled(false)
+        .LabelLocation(FormLabelLocation.Top)
+        .MinColWidth(300)
+        .ShowValidationSummary(true)
+        .ReadOnly(false)
+        .ScrollingEnabled(true)
+        .ActiveStateEnabled(false)
+        .Items(items =>
+        {
+            items.AddGroup().ColCount(2).ColSpan(2).Items(gItem =>
+            {
+                gItem.AddSimpleFor(m => m.Caption).Editor(e => e.TextArea().Height(40)).ColSpan(2).IsRequired(true);
+                gItem.AddSimpleFor(m => m.Description).Editor(e => e.TextArea().Height(60)).ColSpan(2).IsRequired(true);
+                //gItem.AddSimpleFor(m => m.Address).Editor(e => e.TextArea().Height(40)).ColSpan(2).IsRequired(true);
+                gItem.AddSimpleFor(m => m.BuyOrSell).Editor(e => e.SelectBox().DataSource(new JS("buyOrSell")).ValueExpr("Name").DisplayExpr("Name")).ColSpan(1).IsRequired(true);
+                gItem.AddSimpleFor(m => m.Category).Editor(e => e.SelectBox().DataSource(new JS("category")).ValueExpr("Name").DisplayExpr("Name")).ColSpan(1).IsRequired(true);
+
+            });
+
+            items.AddGroup()
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimple()
+                .Name("Address")
+                .DataField("Address")
+                .ColSpan(2)
+                .Template(@<text>
+                    <div class="example-container"  style="width:630px;height:450px;">
+                        <div class="row">
+                          <section class="col col-12 header location-address">Address : </section>
+                          <section class="col col-12">
+                            <div class="row">
+                              <section class="col col-12">
+                                <div id="MapLocation" style="height: 350px"></div>
+                              </section>
+                            </div>
+                          </section>
+                        </div>
+                    </div>
+                </text>);
+            });
+
+            items.AddGroup()
+            //.Caption("Photos")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                //groupItems.AddSimple().Name("Image").DataField("Image").ColSpan(2).Template(new TemplateName("FileUploadTemplate"));
+                groupItems.AddSimple()
+                .Name("Image")
+                .DataField("Image")
+                .ColSpan(2)
+                .Template(@<text>
+
+                    <div class="widget-container">
+                    @(Html.DevExtreme().FileUploader()
+                        .ID("file-uploader")
+                        .Name("myFile")
+                        .Multiple(false)
+                        .Accept("*")
+                        .UploadMode(FileUploadMode.Instantly)
+                        .UploadUrl(Url.Action("Upload", "FileUploader", new {area = "Vendor" }))
+                        .OnValueChanged("fileUploader_valueChanged")
+                    )
+                        <div class="content" id="selected-files">
+
+                        </div>
+                    </div>
+                </text>);
+            });
+
+        })
+        .ShowColonAfterLabel(true).Visible(true).OnInitialized("onFormInitialized")
+    )
+}
+
+@* Templates *@
+<template id="marketplace-card-item">
+    <div class="item-card">
+        @*<div class="date-posted"> august 22, 1997</div>*@
+        <div class="item-type">Selling</div>
+        <div class="item-edit" role="button"><i class="fas fa-pen"></i></div>
+        <div class="image-container">
+            <img src="https://via.placeholder.com/200x200?text=No+image+available" alt="item pic">
+        </div>
+        <div class="item-caption">
+            <p>lorem ipsuasdfkj sdlkfjs asdf sdfsdf </p>
+            <p class="item-address"><i>address is here </i></p>
+        </div>
+    </div>
+</template>
+
+<template id="postImagesTemplate">
+    <li>
+        <article>
+
+            <a href="">
+
+                <figure>
+
+                    <img src="http://www.awwwards.com/awards/images/2013/07/bootstrap-resources-cover2.jpg" alt="">
+                </figure>
+            </a>
+        </article>
+    </li>
+</template>
+
+<template id="postFormImagesTemplate">
+    <li>
+        <article>
+            <button type="button" class="close image-delete" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <a href="">
+
+                <figure>
+
+                    <img src="https://via.placeholder.com/468x60?text=No+image+available" alt="">
+                </figure>
+            </a>
+        </article>
+    </li>
+</template>
+
+
+
+<div class="row">
+    <section class="col-lg-3 connectedSortable">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-screwdriver mr-1"></i>
+                    Options
+                </h3>
+            </div>
+            <div class="card-body timeline-parent">
+                <div class="filter-container">
+                    <div class="search-filter">
+                        <input type="text">
+                    </div>
+                    <div class="selling-type-filter">
+                        <fieldset>
+                            <legend>Type:</legend>
+                            <div>
+                                <input type="checkbox" id="Sell" name="Sell">
+                                <label for="Sell">Sell</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="Buy" name="Buy">
+                                <label for="Buy">Buy</label>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="meat-type-filter">
+                        <fieldset>
+                            <legend>Meat:</legend>
+                            <div>
+                                <input type="checkbox" id="Pig" name="scales">
+                                <label for="scales">Pig</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="Cow" name="Cow">
+                                <label for="horns">Chicken</label>
+                            </div>
+
+                            <div>
+                                <input type="checkbox" id="Goat" name="Goat">
+                                <label for="Goat">Goat</label>
+                            </div>
+
+                            <div>
+                                <input type="checkbox" id="Cow" name="Cow">
+                                <label for="Cow">Cow</label>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    @*<div class="clear-filter">
+                            <div class="clear-filter-button">Clear Filter</div>
+                        </div>*@
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="col-lg-9 connectedSortable">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-inbox mr-1"></i>
+                    Post
+                </h3>
+                <button type="button" class="btn btn-primary float-right" onclick="openPostPopup()">Buy Or Sell</button>
+
+            </div>
+            <div class="card-body">
+                <div class="marketplace-parent-container">
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+<script src="~/lib/signalr/dist/browser/signalr.js"></script>
+
+<script>
+    //TODO: edit a item
+    //TODO: filtering
+    var popup, form, fileUploader;
+    // true if edit false if add
+    var isPostEdit = false;
+
+    var itemsList = [];
+    var filteredList = [];
+
+    //for uploading post images
+    var pId;
+    var postImage;
+    var postImages = [];
+
+  
+
+
+    //
+    const buyOrSell = [{ Name: "Buying" }, { Name: "Selling" }];
+    const category = [{ Name: "Pig" }, { Name: "Cow" }, { Name: "Chicken" }, { Name: "Goat" }, { Name: "Carabao" }];
+
+    function OnUploadStarted(e, t, d) {
+        console.log(e);
+        console.log(t);
+        console.log(d);
+    }
+
+    //custom form initialization
+    function onFormInitialized(e) {
+        form = e.component;
+    }
+
+    //Custom popUpInitialization
+    function onPopupInitialized(e) {
+        popup = e.component;
+    }
+
+    //popup open
+    function openPostPopup() {
+        isPostEdit = false;
+        popup.option("visible", true);
+        if (form) {
+            form.option('formData', {});
+        }
+
+        initGeolocation()
+    }
+
+    //var for geolocation
+    var myMap;
+    var lyrOSM;
+    var marker;
+    var mapLocationDisplayPopup;
+    var displayName;
+    var locationLatLng;
+    var curLocation = [11.0530536, 124.0110354];
+
+    function initGeolocation(latitude, longitude, locationName) {
+
+        if (myMap == null) {
+            // create map object
+            myMap = L.map('MapLocation').setView(curLocation, 18);
+            mapLocationDisplayPopup = L.popup();
+            //add basemap layer
+            lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+            myMap.addLayer(lyrOSM);
+            var geocoder = L.Control.geocoder({
+                defaultMarkGeocode: false
+            })
+                .on('markgeocode', function (e) {
+                    var latlng = e.geocode.center;
+                    if (marker != undefined) {
+                        myMap.removeLayer(marker);
+                        marker = null;
+                        locationLatLng = null;
+                    }
+                    var p = new Promise(function (resolve, reject) {
+                        $.ajax({
+                            url: "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + latlng.lat + "&lon=" + latlng.lng,
+                            success: function (data) {
+                                resolve(data)
+                            },
+                            error: function (data) {
+                                reject(data)
+                            }
+                        });
+                    });
+                    p.then((data) => {
+                        console.log(data);
+                        marker = L.marker(latlng).addTo(myMap);
+                        displayName = data.display_name;
+                        locationLatLng = latlng;
+                        mapLocationDisplayPopup.setLatLng(latlng).setContent(displayName).openOn(myMap);
+                    }).catch((err) => {
+                        console.table(err);
+                    });
+
+                    console.log(latlng);
+                    myMap.fitBounds(e.geocode.bbox);
+                })
+                .addTo(myMap);
+
+            myMap.on('click', function (e) {
+                // console.log(e);
+                if (marker != undefined) {
+                    myMap.removeLayer(marker);
+                    marker = null;
+                    locationLatLng = null;
+                } else {
+                    console.log("no marker");
+                }
+                var p = new Promise(function (resolve, reject) {
+                    $.ajax({
+                        url: "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + e.latlng.lat + "&lon=" + e.latlng.lng,
+                        success: function (data) {
+                            resolve(data)
+                        },
+                        error: function (data) {
+                            reject(data)
+                        }
+                    });
+                });
+                p.then((data) => {
+                    console.log(data);
+                    marker = L.marker(e.latlng).addTo(myMap);
+                    displayName = data.display_name;
+                    locationLatLng = e.latlng;
+                    mapLocationDisplayPopup.setLatLng(e.latlng).setContent(displayName).openOn(myMap);
+                    document.querySelector('.location-address').innerHTML = displayName;
+                }).catch((err) => {
+                    console.table(err);
+                });
+            });
+
+            if (latitude != null && longitude != null) {
+                var newLatLangFromItem = { lat: latitude, lng: longitude };
+                locationLatLng = newLatLangFromItem;
+
+                marker = L.marker(newLatLangFromItem).addTo(myMap);
+                mapLocationDisplayPopup.setLatLng(newLatLangFromItem).setContent(locationName).openOn(myMap);
+                //myMap.fitBounds(e.geocode.bbox);
+            }
+        } else {
+
+            if (latitude != null && longitude != null) {
+                if (marker != null) {
+                    myMap.removeLayer(marker);
+                    myMap.removeLayer(mapLocationDisplayPopup);
+                    marker = null;
+                    locationLatLng = null;
+                }
+
+                var newLatLangFromItem = { lat: latitude, lng: longitude };
+                locationLatLng = newLatLangFromItem;
+
+                marker = L.marker(newLatLangFromItem).addTo(myMap);
+                mapLocationDisplayPopup.setLatLng(newLatLangFromItem).setContent(locationName).openOn(myMap);
+                //myMap.fitBounds(e.geocode.bbox);
+
+            }
+        }
+    }
+
+
+    var addressMapInformation;
+    var addressMapInformationLyrOSM;
+    var addressMapInformationMarker;
+    var addressMapInformationPopup;
+
+    function initAddressMapInformation(latitude, longitude, addressName) {
+        var itemLatLng = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
+
+        if (addressMapInformation == null) {
+            if (latitude != null && longitude != null) {
+                // create map object
+                addressMapInformation = L.map('addressMapLocationInformation', {
+                    center: new L.LatLng(latitude,longitude),
+                }).setView(itemLatLng, 18);
+            
+                lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+                addressMapInformation.addLayer(lyrOSM);
+
+
+                var geocoder = L.Control.geocoder().addTo(addressMapInformation);
+
+                addressMapInformationMarker = L.marker(itemLatLng).addTo(addressMapInformation);
+                //var latLon = L.latLng(itemLatLng.lat, itemLatLng.lng);
+                //var bounds = latLon.toBounds(100); // 500 = metres
+                //addressMapInformation.panTo(latLon).fitBounds(bounds);
+
+                //myMap = L.map('addressMapLocationInformation').setView(curLocation, 18);
+                //mapLocationDisplayPopup = L.popup();
+                ////add basemap layer
+                //lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+                //myMap.addLayer(lyrOSM);
+
+            }
+        } else {
+
+            if (addressMapInformationMarker != null) {
+                addressMapInformation.removeLayer(addressMapInformationMarker);
+                //addressMapInformation.removeLayer(addressMapInformationPopup);
+                addressMapInformationMarker = null;
+            }
+
+            addressMapInformationPopup = L.popup();
+
+            addressMapInformationMarker = L.marker(itemLatLng).addTo(addressMapInformation);
+        }
+    }
+
+
+
+    //popup close
+    function onCancelClick() {
+        popup.hide();
+    }
+
+    //save button click
+    function onConfirmClick() {
+        let data = form.option("formData");
+
+        let dataToPost = {
+            PostBody: data.PostBody
+        };
+
+        let imageDataToPost = {
+            postImages
+        };
+
+        var validationResult = form.validate();
+        if (validationResult != null && !validationResult.isValid) {
+            //alert('Please fix invalid fields');
+            return false;
+        } else if (displayName == null || locationLatLng == null) {
+            window.alert('Plese specify the address');
+            return false;
+        } else {
+            if (!isPostEdit) {
+                var ll = { Lat: locationLatLng.lat.toString(), Lng: locationLatLng.lng.toString() };
+
+                $.ajax({
+                    method: "POST",
+                    url: "../../marketplaceapi/saveitem",
+                    data: {
+                        values: JSON.stringify(data),
+                        postImages: JSON.stringify(postImages),
+                        address: JSON.stringify({ Val: displayName }),
+                        latlngStr: JSON.stringify(ll)
+                    }
+                }).done(function () {
+                    //console.log("postSaved");
+                    //loadPosts();
+                    loadItems();
+                    popup.hide();
+                    //isPostEdit = false;
+
+                }).fail(function (data) {
+                    console.log("error");
+                    console.log(data);
+                });
+            }
+            else {
+                var ll = {
+                    Lat: locationLatLng.lat.toString(), Lng: locationLatLng.lng.toString()
+                };
+                $.ajax({
+                    method: "POST",
+                    url: "../../marketplaceapi/UpdateItem",
+                    data: {
+                        key: pId,
+                        values: JSON.stringify(data),
+                        postImages: JSON.stringify(postImages),
+                        address: JSON.stringify({ Val: displayName }),
+                        latlngStr: JSON.stringify(ll)
+                    }
+                }).done(function () {
+                    //console.log("postSaved");
+                    loadItems();
+                    popup.hide();
+                }).fail(function (data) {
+                    console.log("error");
+                    console.log(data);
+                });
+
+                console.log(data);
+            }
+        }
+
+    }
+
+
+    //if file upload data values was changed
+    function fileUploader_valueChanged(e, t, d) {
+        var files = e.value;
+        e.component.option("onUploaded", "onUploaded");
+        var result = e.component.option("uploadUrl", "../../MarketplaceFileUpload/UploadItemImage");
+
+        if (files.length > 0) {
+            $("#selected-files .selected-item").remove();
+
+            //TODO: show the uploaded images
+
+        }
+        else
+            $("#selected-files").hide();
+    }
+
+
+    function afterUpload() {
+        $.ajax({
+            url: "../../MarketplaceFileUpload/GetUploadedItemImage"
+        }).done(function (data) {
+            postImage = { ImagePath: data };
+            postImages.push(postImage);
+            loadImageListToPopup();
+        });
+    }
+
+    /*
+    * function responsible on loading imagelist when the pop up to edit the post was shown
+    */
+    function loadImageListToPopup() {
+        let parent = document.querySelector("#selected-files.content");
+        let postImagesTemplate = document.querySelector('template#postFormImagesTemplate');
+        parent.innerHTML = "";
+
+        if (postImages.length > 0) {
+            $.each(postImages, function (i, image) {
+                let imageClone = postImagesTemplate.content.cloneNode(true);
+
+                let img = imageClone.querySelector("li article a figure img");
+                let a = imageClone.querySelector("li article a");
+                let button = imageClone.querySelector("li article button");
+
+                img.setAttribute("src", image.ImagePath);
+                a.setAttribute("href", image.ImagePath);
+                button.setAttribute("data-value", image.ImageId)
+                parent.append(imageClone);
+            });
+        }
+
+    }
+
+
+    /*
+ * function responsible for loading post
+ */
+    function loadItems(filteredItems) {
+        console.log(filteredItems);
+        if (filteredItems) {
+            let itemTemplate = document.querySelector('template#marketplace-card-item');
+            var itemParentContainer = document.querySelector('.marketplace-parent-container');
+            let postImagesTemplate = document.querySelector('template#postImagesTemplate');
+
+            $('.marketplace-parent-container').empty();
+            $.each(filteredItems, function (i, item) {
+                let clone = itemTemplate.content.cloneNode(true);
+                clone.querySelector(".item-card").setAttribute("data-value", item.ItemID);
+                clone.querySelector(".item-edit ").setAttribute("data-value", item.ItemID);
+                clone.querySelector(".item-type").innerHTML = item.BuyOrSell;
+                clone.querySelector(".item-caption p").innerHTML = item.Caption;
+
+
+                if (item.Address == null) {
+                    clone.querySelector(".item-caption .item-address i").innerHTML = "";
+                } else {
+                    clone.querySelector(".item-caption .item-address i").innerHTML = item.Address;
+                    clone.querySelector(".item-caption .item-address i").setAttribute("data-lat", item.Lat);
+                    clone.querySelector(".item-caption .item-address i").setAttribute("data-lng", item.Lng);
+                    clone.querySelector(".item-caption .item-address i").setAttribute("data-displayName", item.address);
+                }
+
+                if (item.ImageList.length > 0) {
+                    clone.querySelector(".image-container img").setAttribute("src", item.ImageList[0].ImagePath);
+                }
+                if (!item.IsEditable) {
+                    clone.querySelector(".item-edit ").innerHTML = "";
+                }
+                itemParentContainer.appendChild(clone);
+            });
+        }
+        else {
+            //ajax to get the list of post
+            $.ajax({
+                url: "../../marketplaceapi/getitems"
+            }).done(function (data) {
+                let itemTemplate = document.querySelector('template#marketplace-card-item');
+                var itemParentContainer = document.querySelector('.marketplace-parent-container');
+                let postImagesTemplate = document.querySelector('template#postImagesTemplate');
+                itemsList = data;
+                $('.marketplace-parent-container').empty();
+
+                $.each(data, function (i, item) {
+
+                    let clone = itemTemplate.content.cloneNode(true);
+                    clone.querySelector(".item-card").setAttribute("data-value", item.ItemID);
+                    clone.querySelector(".item-edit ").setAttribute("data-value", item.ItemID);
+                    clone.querySelector(".item-type").innerHTML = item.BuyOrSell;
+                    clone.querySelector(".item-caption p").innerHTML = item.Caption;
+
+                    if (item.Address == null) {
+                        clone.querySelector(".item-caption .item-address i").innerHTML = "";
+                    } else {
+                        clone.querySelector(".item-caption .item-address i").innerHTML = item.Address;
+                        clone.querySelector(".item-caption .item-address i").setAttribute("data-lat", item.Lat);
+                        clone.querySelector(".item-caption .item-address i").setAttribute("data-lng", item.Lng);
+                        clone.querySelector(".item-caption .item-address i").setAttribute("data-displayName", item.Address);
+                    }
+
+
+                    if (item.ImageList.length > 0) {
+                        clone.querySelector(".image-container img").setAttribute("src", item.ImageList[0].ImagePath);
+                    }
+                    if (!item.IsEditable) {
+                        clone.querySelector(".item-edit ").innerHTML = "";
+                    }
+
+
+
+                    itemParentContainer.appendChild(clone);
+
+
+                });
+
+            }).fail(function (data) {
+                console.log("error");
+                console.log(data);
+            });
+        }
+
+    }
+
+
+    var openedItem;
+    var roomInfo;
+    var roomId;
+    var roomMessages = [];
+
+    $(document).ready(function () {
+        loadItems();
+
+        //fire when upload is done
+        $("body").on('DOMSubtreeModified', '.dx-fileuploader-file-status-message', function () {
+            if ($(".dx-fileuploader-file-status-message").text() == "Uploaded") {
+                afterUpload();
+                console.log(postImages);
+            } else {
+            }
+        });
+
+
+
+        $("body").on("click", ".item-edit", function (event) {
+            event.stopPropagation();
+            pId = $(this).attr("data-value");
+            console.log(pId);
+
+            $.ajax({
+                url: "../../marketplaceapi/getitem",
+                data: {
+                    itemId: pId
+                }
+            })
+                .done(function (data) {
+
+                    popup.option("visible", true);
+                    form.option('formData', data);
+                    initGeolocation(data.Lat, data.Lng, data.Address);
+
+                    isPostEdit = true;
+
+                    postImages = data.ImageList;
+                    console.log(postImages);
+                    loadImageListToPopup();
+                });
+        });
+
+        $('body').on('click', ".image-delete", function (e) {
+            //TODO: delete image here
+            //console.log($(this).next("a").attr("href"));
+            //console.log($(this).attr("data-value"));
+            var imageId = $(this).attr("data-value");
+            $.ajax({
+                url: "../../marketplaceapi/DeleteItemPhoto",
+                data: {
+                    image: imageId
+                }
+
+            }).done(function () {
+                //loadImageListToPopup();
+                //get data out of the postID
+                $.ajax({
+                    url: "../../marketplaceapi/getitem",
+                    data: {
+                        itemId: pId
+                    }
+                })
+                    .done(function (data) {
+                        postImages = data.ImageList;
+                        console.log(postImages);
+                        loadImageListToPopup();
+                    });
+            });
+
+        });
+
+        $(".close").on("click", function () {
+            var modal = document.getElementById("itemModal");
+            modal.style.display = "none";
+
+            document.getElementById("itemMessageModal").style.display = "none";
+        });
+
+        $("body").on("click", ".product-image-thumb", function () {
+            console.log($(this).attr("src"));
+            $(".product-image").attr("src", $(this).find("img").attr("src"));
+        });
+
+
+        $("body").on("click", ".item-card", function () {
+            var modal = document.getElementById("itemModal");
+            var itemId = $(this).attr("data-value");
+            const loadItemData = new Promise(function (resolve, reject) {
+                $.ajax({
+                    method: "GET",
+                    url: "../../marketplaceApi/GetItem/?itemId=" + itemId,
+                    success: function (data) {
+                        resolve(data)
+                    },
+                    error: function (data) {
+                        reject(data)
+                    }
+                });
+            });
+
+            loadItemData.then((res) => {
+                console.log(res);
+                var itemModalInfos = document.querySelector("#itemModal div div div .item-infos");
+                itemModalInfos.querySelector(".modal-item-caption").innerHTML = res.Caption;
+                itemModalInfos.querySelector(".modal-item-description").innerHTML = res.Description;
+                itemModalInfos.querySelector("div label h5").innerHTML = res.UserFullname;
+                itemModalInfos.querySelector(".modal-item-buysell-category .item-buysell").innerHTML = res.BuyOrSell;
+                itemModalInfos.querySelector(".modal-item-buysell-category .item-category").innerHTML = res.Category;
+                itemModalInfos.querySelector("div label h5").innerHTML = res.UserFullname;
+
+                if (res.Address == null) {
+                    itemModalInfos.querySelector("div label h6 i").innerHTML = "";
+                } else {
+                    itemModalInfos.querySelector("div label h6 i").innerHTML = res.Address;
+                   
+                }
+
+                if (!res.IsEditable) {
+                    itemModalInfos.querySelector(".mt-4 div").style.display = "block";
+                    itemModalInfos.querySelector(".mt-4 div").setAttribute("data-value", res.ItemID);
+                }
+                else {
+                    itemModalInfos.querySelector(".mt-4 div").style.display = "none";
+
+                }
+
+                if (res.ImageList.length > 0) {
+                    var itemModalImages = document.querySelector("#itemModal div div div .item-images");
+                    itemModalImages.querySelector("#itemModal div div div .item-images .image-large img").setAttribute("src", res.ImageList[0].ImagePath);
+                    itemModalImages.querySelector("#itemModal div div div .item-images .product-image-thumbs").innerHTML = "";
+
+                    var thumbnailsParent = itemModalImages.querySelector("#itemModal div div div .item-images .product-image-thumbs");
+                    let itemTemplate = document.querySelector('template#itemModalThumbnailTemplate');
+                    $.each(res.ImageList, function (i, item) {
+                        let clone = itemTemplate.content.cloneNode(true);
+                        clone.querySelector("div img").setAttribute("src", item.ImagePath);
+                        thumbnailsParent.appendChild(clone);
+                    });
+                } else {
+                    var itemModalImages = document.querySelector("#itemModal div div div .item-images");
+                    itemModalImages.querySelector("#itemModal div div div .item-images .image-large img").setAttribute("src", "https://via.placeholder.com/200x200?text=No+image+available");
+                    itemModalImages.querySelector("#itemModal div div div .item-images .product-image-thumbs").innerHTML = "";
+                }
+
+                    modal.style.display = "block";
+
+                }).catch(function (error) {
+            });
+        });
+
+        $("body").on("click", ".item-caption .item-address i", function (event) {
+            event.stopPropagation();
+            console.log($(this).attr('data-lat'));
+            console.log($(this).attr('data-lng'));
+            $("#addressInfoModal").modal("toggle");
+            console.log($(this).attr('data-displayName'));
+            initAddressMapInformation($(this).attr('data-lat'), $(this).attr('data-lng'), $(this).attr('data-displayName'));
+        });
+
+        let connection, createRoom, doNothing;
+        //var modal = document.getElementById("itemModal");
+        //modal.style.display = "block";
+
+        connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+
+        connection.start().then(function () {
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+
+        connection.on("onConnected", function (message) {
+            console.log("is now connected");
+            console.log(message);
+
+            getLoggedInUser();
+            getAllConnections();
+        });
+
+
+        connection.on("onError", function (message) {
+            viewModel.serverInfoMessage(message);
+            $("#errorAlert").removeClass("d-none").show().delay(5000).fadeOut(500);
+        });
+
+
+        doNothing = function () {
+            connection.on("doNothing", function (e) { console.log("do nothing"); });
+        }
+
+        function getLoggedInUser() {
+            connection.invoke("getLoggedInUser").then(function (data) {
+                console.log(data);
+            }).catch(function (err) {
+                console.log(err);
+            });
+        }
+
+        function getAllConnections() {
+            connection.invoke("getAllConnections").then(function (data) {
+                console.log("List of connections");
+                console.table(data);
+            }).catch(function (err) {
+                console.log(err);
+            });
+        }
+
+        $("body").on("click", ".mt-4 .chat-button", function () {
+            console.log($(this).attr("data-value"));
+            connection.invoke("CreateRoom", $(this).attr("data-value")).then(function (data) {
+                console.log(data);
+
+                roomId = data;
+
+                openRoom(data);
+
+
+            }).catch(function (err) {
+                console.log(err);
+            });;
+        });
+
+        function openRoom(roomid) {
+
+            var messageModal = document.querySelector("#itemMessageModal");
+
+
+            //get room info
+            connection.invoke("GetRoomInfo", roomid).then(function (data) {
+                console.log(data);
+                roomInfo = data;
+                if (roomInfo != null) {
+                    messageModal.querySelector("div div .card-title").innerHTML = roomInfo.roomName;
+                }
+            }).catch(function (err) {
+                console.log(err);
+            });
+            //get room messages
+            connection.invoke("GetRoomMessages", roomid).then(function (data) {
+                console.log(data);
+                roomMessages = data;
+                loadMessagesToChatPopup();
+
+            }).catch(function (err) {
+                console.log(err);
+            });
+            //populat room info to modal
+            //populate messages to the modal
+
+            //open the message card
+            var modal = document.getElementById("itemMessageModal");
+            modal.style.display = "block";
+        }
+
+
+
+        $("body").on("click", "button.send-message", function () {
+            var msg = $(this).closest(".input-group").find("input").val();
+            if (msg.trim().length > 0) {
+                //code here if not
+                $(this).closest(".input-group").find("input").val("");
+                console.log(msg);
+                //send to the messages - save to db and refresh other client side
+                connection.invoke("SendMessageFromMarketPlace", roomId, msg).then(function (data) {
+                    if (data) {
+                        console.log("message sent")
+                        connection.invoke("GetRoomMessages", roomId).then(function (data) {
+                            console.log(data);
+                            roomMessages = data;
+                            loadMessagesToChatPopup();
+                        }).catch(function (err) {
+                            console.log(err);
+                        });
+                    } else {
+                        console.log("message not sent")
+
+                    }
+                }).catch(function (err) {
+                    console.log(err);
+                });
+                //refresh screen
+            }
+        });
+
+        $("body").on("click", ".filter-container", function () {
+            filterItems();
+        });
+
+        $(".search-filter input").keyup(function () {
+            filterItems($(this).val());
+
+        });
+
+        function filterItems(searchString) {
+
+            var srchStringList = [];
+
+            if (searchString != null) {
+                if (searchString.length >= 4) {
+                    var f = itemsList.filter((e) => e.Caption.includes(searchString));
+                    srchStringList = f;
+                }
+            } else {
+                //var f = itemsList.filter((e) => e.Caption.includes($(".search-filter input").val()));
+                //srchStringList = f;
+                if ($(".search-filter input").val().length >= 4) {
+                    var f = itemsList.filter((e) => e.Caption.includes(searchString));
+                    srchStringList = f;
+                }
+
+            }
+
+            //filter item that are selling
+            var sellingList = [];
+            if ($("input#Sell").is(":checked")) {
+                var f = itemsList.filter((e) => e.BuyOrSell.toString() == "Selling");
+                sellingList = f;
+            }
+
+
+            var buyingList = [];
+            if ($("input#Buy").is(":checked")) {
+                var f = itemsList.filter((e) => e.BuyOrSell.toString() == "Buying");
+                buyingList = f;
+            }
+
+            var pigList = [];
+            if ($("input#Pig").is(":checked")) {
+                var f = itemsList.filter((e) => e.Category.toString() == "Pig");
+                pigList = f;
+            }
+
+            var chickenList = [];
+            if ($("input#Chicken").is(":checked")) {
+                var f = itemsList.filter((e) => e.Category.toString() == "Chicken");
+                chickenList = f;
+            }
+
+            var cowList = [];
+            if ($("input#Cow").is(":checked")) {
+                var f = itemsList.filter((e) => e.Category.toString() == "Cow");
+                cowList = f;
+            }
+
+
+            var goatList = [];
+            if ($("input#Goat").is(":checked")) {
+                var f = itemsList.filter((e) => e.Category.toString() == "Goat");
+                goatList = f;
+            }
+
+            var collectiveRes = Array.prototype.concat(srchStringList, sellingList, buyingList, pigList, chickenList, cowList, goatList);
+            var resID = collectiveRes.map(({ ItemID }) => ItemID);
+            //unique / distinct
+            var distinctId = [...new Set(resID)];
+
+            finalRes = [];
+            distinctId.map(function (e) {
+                var fr = collectiveRes.find(({ ItemID }) => ItemID.toString() == e.toString());
+                if (fr) {
+                    finalRes.push(fr);
+                }
+            });
+
+            if (finalRes.length == 0) {
+                if (!$("input#Sell").is(":checked") && !$("input#Buy").is(":checked") && !$("input#Pig").is(":checked") &&
+                    !$("input#Chicken").is(":checked") && !$("input#Cow").is(":checked") && !$("input#Goat").is(":checked")) {
+                    loadItems();
+                } else {
+                    $('.marketplace-parent-container').empty();
+
+                }
+
+            } else {
+                loadItems(finalRes);
+            }
+        }
+
+    });
+
+
+
+
+
+    function loadMessagesToChatPopup() {
+        if (roomMessages.length > 0) {
+            var chatMineTemplate = document.querySelector("template#rightMessageBubble");
+            var chatRecieverTemplate = document.querySelector("template#leftMessageBubble");
+            var chatParent = document.querySelector("#itemMessageModal div .card-body .direct-chat-messages");
+            chatParent.innerHTML = "";
+
+            $.each(roomMessages, function (i, item) {
+                if (item.isSender) {
+                    let clone = chatMineTemplate.content.cloneNode(true);
+                    clone.querySelector("div div span").innerHTML = item.senderFullname;
+                    clone.querySelector("div .direct-chat-text").innerHTML = item.messageText;
+                    //console.log(item);
+                    chatParent.append(clone);
+                } else {
+                    let clone = chatRecieverTemplate.content.cloneNode(true);
+                    clone.querySelector("div div span").innerHTML = item.senderFullname;
+                    clone.querySelector("div .direct-chat-text").innerHTML = item.messageText;
+                    //console.log(item);
+                    chatParent.append(clone);
+                }
+            });
+            document.querySelector("#itemMessageModal div .card-body .direct-chat-messages .direct-chat-msg:last-child").scrollIntoView();
+        }
+    }
+
+    
+
+
+
+
+</script>
+
+<!-- address info modal -->
+<div class="modal fade" id="addressInfoModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" >
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">View Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="width:640px;">
+              
+                        <div id="addressMapLocationInformation" style="height: 350px; "></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="itemModalThumbnailTemplate">
+    <div class="product-image-thumb"><img src="../../dist/img/prod-5.jpg" alt="Product Image"></div>
+
+</template>
+
+<div id="itemModal" class="modal">
+    <div class="card card-solid col-8 clearfix" style="margin: 0 auto">
+        <span class="close" style="position: absolute;right: 15px;top: 5px;">&times;</span>
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-8 col-sm-8 item-images">
+                    <div class="col-12 image-large">
+                        <img img src="https://via.placeholder.com/200x200?text=No+image+available" class="product-image" alt="Product Image" style="height: 490px;width: 490px;object-fit: contain;">
+                    </div>
+                    <div class="col-12 product-image-thumbs">
+                        <div class="product-image-thumb active"><img src="../../dist/img/prod-1.jpg" alt="Product Image"></div>
+                        <div class="product-image-thumb"><img src="../../dist/img/prod-2.jpg" alt="Product Image"></div>
+                        <div class="product-image-thumb"><img src="../../dist/img/prod-3.jpg" alt="Product Image"></div>
+                        <div class="product-image-thumb"><img src="../../dist/img/prod-4.jpg" alt="Product Image"></div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4 item-infos">
+                    <h3 class="my-3 modal-item-caption">LOWA Men’s Renegade GTX Mid Hiking Boots Review</h3>
+                    <p class="modal-item-description">Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terr.</p>
+                    <p class="modal-item-buysell-category"><b class="item-buysell">buy or selling</b> : <b class="item-category">Cow</b></p>
+
+                    <hr>
+                    <h4>Seller info</h4>
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-default text-center active">
+                            <h5 class="modal-item-username">Fullname</h5>
+                            <h6><i class="modal-item-address">address</i></h6>
+                        </label>
+
+                    </div>
+                    <div class="mt-4">
+                        <div class="btn btn-primary btn-lg btn-flat chat-button">
+                            <i class="fas fa-cart-plus fa-lg mr-2"></i>
+                            Chat seller now
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<template id="leftMessageBubble">
+    <div class="direct-chat-msg">
+        <div class="direct-chat-infos clearfix">
+            <span class="direct-chat-name float-left">Alexander Pierce</span>
+            @*<span class="direct-chat-timestamp float-right">23 Jan 2:00 pm</span>*@
+        </div>
+        <div class="direct-chat-text">
+            Is this template really for free? That's unbelievable!
+        </div>
+    </div>
+</template>
+<!--<div id="rightMessageBubble">
+    <div class="direct-chat-msg right">
+        <div class="direct-chat-infos clearfix">
+            <span class="direct-chat-name float-right">Sarah Bullock</span>-->
+@*<span class="direct-chat-timestamp float-left">23 Jan 2:05 pm</span>*@
+<!--</div>
+
+        <div class="direct-chat-text">
+            You better believe it!
+        </div>
+    </div>
+</div>-->
+
+<template id="rightMessageBubble">
+    <div class="direct-chat-msg right">
+        <div class="direct-chat-infos clearfix">
+            <span class="direct-chat-name float-right">Sarah Bullock</span>
+            @*<span class="direct-chat-timestamp float-left">23 Jan 2:05 pm</span>*@
+        </div>
+
+        <div class="direct-chat-text">
+            You better believe it!
+        </div>
+    </div>
+</template>
+
+<div id="itemMessageModal" class="modal">
+    <div class="card card-primary card-outline direct-chat direct-chat-primary" style="width:400px; margin-left:auto;margin-right:auto;">
+        <div class="card-header">
+            <h3 class="card-title">Room name</h3>
+            <div class="card-tools">
+                @*<button type="button" class="btn btn-tool" data-card-widget="remove">
+                        <i class="fas fa-times"></i>
+                    </button>*@
+                <span class="close" style="position: absolute;right: 15px;top: 5px;">&times;</span>
+
+            </div>
+        </div>
+        <!-- /.card-header -->
+        <div class="card-body">
+            <div class="direct-chat-messages">
+                @*<div class="direct-chat-msg">
+                        <div class="direct-chat-infos clearfix">
+                            <span class="direct-chat-name float-left">Alexander Pierce</span>
+                            <span class="direct-chat-timestamp float-right">23 Jan 2:00 pm</span>
+                        </div>
+                        <div class="direct-chat-text">
+                            Is this template really for free? That's unbelievable!
+                        </div>
+                    </div>
+
+                    <div class="direct-chat-msg right">
+                        <div class="direct-chat-infos clearfix">
+                            <span class="direct-chat-name float-right">Sarah Bullock</span>
+                            <span class="direct-chat-timestamp float-left">23 Jan 2:05 pm</span>
+                        </div>
+
+                        <div class="direct-chat-text">
+                            You better believe it!
+                        </div>
+                    </div>*@
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="input-group">
+                <input type="text" name="message" placeholder="Type Message ..." class="form-control">
+                <span class="input-group-append">
+                    <button type="submit" class="btn btn-primary send-message">Send</button>
+                </span>
+            </div>
+        </div>
+    </div>
+
+</div>
+

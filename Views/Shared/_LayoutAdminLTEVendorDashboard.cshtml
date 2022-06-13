@@ -1,0 +1,426 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Wiggly.Identity
+
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @*<title>AdminLTE 3 | Blank Page</title>*@
+    <title>@ViewData["Title"] - LibraManagement</title>
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="~/dist/css/adminlte.min.css">
+
+    <link href="~/css/devextreme/bootstrap.css" rel="stylesheet" />
+    <link href="~/css/devextreme/dx.common.css" rel="stylesheet" />
+    <link href="~/css/devextreme/dx.light.css" rel="stylesheet" />
+    <script src="~/js/devextreme/jquery.js"></script>
+    <script src="~/js/devextreme/bootstrap.js"></script>
+    <script src="~/js/devextreme/dx.all.js"></script>
+    <script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script>
+    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+
+
+    <link href="~/css/site.css" rel="stylesheet" />
+</head>
+<body class="hold-transition sidebar-mini">
+    <div class="preloader flex-column justify-content-center align-items-center">
+        <img class="animation__shake" src="~/images/wiggly.png" alt="AdminLTELogo" height="60" width="60">
+    </div>
+    <!-- Site wrapper -->
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light" style="background: #ffcff4;">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+                @*<li class="nav-item d-none d-sm-inline-block">
+                        <a asp-area="Admin" asp-controller="Page" asp-action="Index" class="nav-link">Home</a>
+                    </li>*@
+                @*<li class="nav-item d-none d-sm-inline-block">
+                        <a href="#" class="nav-link">Contact</a>
+                    </li>*@
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <!-- Notifications Dropdown Menu -->
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("SearchLocation", "Page", new { area = "Vendor" })">
+                        <i class="fas fa-search"></i>
+                    </a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#notif-parent">
+                        <i class="far fa-bell"></i>
+                        @*<span class="badge badge-warning navbar-badge" style="font-size: .6rem; font-weight: 300; padding: 2px 4px; position: absolute; right: -5px; top: 9px">15</span>*@
+                    </a>
+                    <div id="notif-parent" class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="max-width:350px">
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item">
+                            <i class="fas fa-thumbs-up mr-2"></i> 4 new messages
+                            @*<span class="float-right text-muted text-sm">3 mins</span>*@
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-calendar mr-2"></i> 4 new messages
+                            @*<span class="float-right text-muted text-sm">3 mins</span>*@
+                        </a>
+
+
+                    </div>
+                </li>
+
+            </ul>
+
+        </nav>
+
+        <template id="notif-template">
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item">
+                <i class="fas fa-bell mr-2"></i> 3 new reports
+                @*<span class="float-right text-muted text-sm">2 days</span>*@
+            </a>
+        </template>
+
+        <!-- /.navbar -->
+        <!-- Main Sidebar Container -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-link">
+                <img src="~/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+                <span class="brand-text font-weight-light">Meat Dealer</span>
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sidebar user (optional) -->
+                <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                    <div class="image">
+                        <img src="~/dist/img/person-thumbnail.png" class="img-circle elevation-2" alt="User Image">
+                    </div>
+                    <div class="info">
+                        <a asp-area="vendor" asp-controller="Page" asp-action="Profile" class="d-block">
+                            @(UserManager.GetUserAsync(User).Result.Firstname + " "
+                            + UserManager.GetUserAsync(User).Result.LastName )
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <!-- Add icons to the links using the .nav-icon class with font-awesome or any other icon font library -->
+
+                        <li class="nav-item">
+                            <a asp-area="Vendor" asp-controller="Page" asp-action="Index" class="nav-link">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>
+                                    Dashboard
+                                </p>
+                            </a>
+                        </li>
+
+                        @*<li class="nav-item">
+                                <a asp-area="Vendor" asp-controller="Page" asp-action="Marketplace" class="nav-link">
+                                    <i class="nav-icon fas fa-store"></i>
+                                    <p>Marketplace</p>
+                                </a>
+                            </li>*@
+
+                        <li class="nav-item">
+                            <a asp-area="Vendor" asp-controller="Page" asp-action="Marketplacechat" class="nav-link">
+                                <i class="nav-icon fas fa-comments"></i>
+                                <p>Chat</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a asp-area="Vendor" asp-controller="Page" asp-action="Transaction" class="nav-link">
+                                <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                <p>Transactions</p>
+                            </a>
+                        </li>
+
+                        @*<li class="nav-item">
+                            <a asp-area="Vendor" asp-controller="Page" asp-action="Schedule" class="nav-link">
+                                <i class="nav-icon fas fa-calendar-day"></i>
+                                <p>Calendar</p>
+                            </a>
+                        </li>*@
+
+
+
+                        <li class="nav-item">
+                            <a asp-area="Vendor" asp-controller="Account" asp-action="Logout" class="nav-link">
+                                @*<i class="nav-icon fas fa=log"></i>*@
+                                <i class="nav-icon fas fa-arrow-right"></i>
+                                @*<i class="fa-solid fa-file-invoice-dollar"></i>*@
+                                <p>Logout</p>
+                            </a>
+                        </li>
+
+
+
+                    </ul>
+                </nav>
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+
+
+
+
+
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <section class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                    </div>
+                </div><!-- /.container-fluid -->
+            </section>
+
+            <!-- Main content -->
+            <section class="content">
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-12">
+
+                                    @RenderBody()
+                                </div>
+                                <!-- /.col -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </section>
+            <!-- /.content -->
+        </div>
+        <!-- /.content-wrapper -->
+        @*<footer class="main-footer">
+                <div class="float-right d-none d-sm-block">
+                    <b>Version</b> 3.2.0
+                </div>
+                <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong> All rights reserved.
+            </footer>*@
+
+
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar-dark">
+            <!-- Control sidebar content goes here -->
+        </aside>
+        <!-- /.control-sidebar -->
+    </div>
+
+    <script>
+        var pushnotif = [];
+
+        function loopThroughNotif(arr) {
+            for (var i = 0; i < arr.length; i++) {
+
+                (function (i) {
+                    setTimeout(function () {
+                        let notif = new Notification("Wiggly Meetup Memo", {
+                            body: arr[i].message
+                        });
+                        notif.onclick = (e) => {
+                            window.location.href = arr[i].link;
+                        };
+                    }, 300);
+                })(i);
+            };
+        }
+
+        function loadNotification() {
+            const loadNotif = new Promise(function (resolve, reject) {
+                $.ajax({
+                    url: "/Vendor/NotificationAPI/GetNotification",
+                    success: function (data) {
+                        resolve(data)
+                    },
+                    error: function (data) {
+                        reject(data)
+                    }
+                });
+            });
+
+            loadNotif.then((data) => {
+                //console.log(data);
+                let template = document.querySelector('template#notif-template');
+                var parent = document.querySelector('#notif-parent');
+
+                parent.innerHTML = "";
+                if (data.length > 0) {
+                    $.each(data, function (i, item) {
+                        let clone = template.content.cloneNode(true);
+
+                        if (item.NotifType == "Push") {
+
+                            if (item.PushNotifIsRead != "Read") {
+                                pushnotif.push({ message: item.Message, link: "https://localhost:44349/vendor/page/MarkPushNotifAsRead?notifID=" + item.Id });
+                            }
+                        
+                           
+                        } else {
+                            clone.querySelector("a").innerHTML = "<i class=\"fas fa-bell mr-2\"></i> " + item.Message;
+
+                            parent.appendChild(clone);
+                        }
+
+                        
+                    });
+
+                    //let notf = new window.Notification("Wiggly Meetup Memo", {
+                    //    body: "asdadadasd"
+                    //});
+
+                    //notf.onclick = (e) => {
+                    //   window.location.href = "https://localhost:44349/sample?id=12";
+                    //}
+                    if (pushnotif.length > 0) {
+                        loopThroughNotif(pushnotif);
+                    }
+
+                } else {
+                    console.log("no comment");
+                    parent.innerHTML = "<p>No notifications.</p>";
+                }
+            }).catch((data) => {
+                var parent = document.querySelector('#notif-parent');
+                parent.innerHTML = "<p>No notifications.</p>";
+
+            });
+        }
+
+        $(document).ready(function () {
+            loadNotification();
+        });
+    </script>
+
+    <!-- ./wrapper -->
+    <!-- jQuery -->
+    @*<script src="../../plugins/jquery/jquery.min.js"></script>*@
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="~/dist/js/adminlte.min.js"></script>
+    <script src="~/plugins/leaflet/leaflet.js"></script>
+    <script src="~/plugins/toastr/toastr.min.js"></script>
+
+
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        //for geolocation
+
+        $(document).ready(function () {
+
+            //var curLocation = [11.0530536, 124.0110354];
+
+            //// create map object
+            //myMap = L.map('MapLocation').setView(curLocation, 10);
+
+            //var mapLocationDisplayPopup = L.popup();
+
+            ////add basemap layer
+            //lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+            //myMap.addLayer(lyrOSM);
+
+
+            //var geocoder = L.Control.geocoder({
+            //    defaultMarkGeocode: false
+            //})
+            //    .on('markgeocode', function (e) {
+            //        var latlng = e.geocode.center;
+            //        if (marker != undefined) {
+            //            myMap.removeLayer(marker);
+            //            marker = null;
+            //            locationLatLng = null;
+            //        }
+            //        var p = new Promise(function (resolve, reject) {
+            //            $.ajax({
+            //                url: "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + latlng.lat + "&lon=" + latlng.lng,
+            //                success: function (data) {
+            //                    resolve(data)
+            //                },
+            //                error: function (data) {
+            //                    reject(data)
+            //                }
+            //            });
+            //        });
+            //        p.then((data) => {
+            //            console.log(data);
+            //            marker = L.marker(latlng).addTo(myMap);
+            //            displayName = data.display_name;
+            //            locationLatLng = latlng;
+            //            mapLocationDisplayPopup.setLatLng(latlng).setContent(displayName).openOn(myMap);
+            //        }).catch((err) => {
+            //            console.table(err);
+            //        });
+
+            //        console.log(latlng);
+            //        myMap.fitBounds(e.geocode.bbox);
+            //    })
+            //    .addTo(myMap);
+
+            //myMap.on('click', function (e) {
+            //    // console.log(e);
+            //    if (marker != undefined) {
+            //        myMap.removeLayer(marker);
+            //        marker = null;
+            //        locationLatLng = null;
+            //    } else {
+            //        console.log("no marker");
+            //    }
+            //    var p = new Promise(function (resolve, reject) {
+            //        $.ajax({
+            //            url: "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + e.latlng.lat + "&lon=" + e.latlng.lng,
+            //            success: function (data) {
+            //                resolve(data)
+            //            },
+            //            error: function (data) {
+            //                reject(data)
+            //            }
+            //        });
+            //    });
+
+            //    p.then((data) => {
+            //        console.log(data);
+            //        marker = L.marker(e.latlng).addTo(myMap);
+            //        displayName = data.display_name;
+            //        locationLatLng = e.latlng;
+            //        mapLocationDisplayPopup.setLatLng(e.latlng).setContent(displayName).openOn(myMap);
+            //    }).catch((err) => {
+            //        console.table(err);
+            //    });
+
+
+            //})
+
+        });
+    </script>
+    <!-- AdminLTE for demo purposes -->
+    @*<script src="/dist/js/demo.js"></script>*@
+    @*<script src="~/js/site.js" asp-append-version="true"></script>*@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
